@@ -1,0 +1,8 @@
+{
+  "/api/history/route": "app/api/history/route.js",
+  "/api/history/[id]/route": "app/api/history/[id]/route.js",
+  "/page": "app/page.js",
+  "/history/page": "app/history/page.js",
+  "/summary/[summaryId]/page": "app/summary/[summaryId]/page.js",
+  "/history/[id]/page": "app/history/[id]/page.js"
+}
