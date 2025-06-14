@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Youtube, Clock, Headphones, FileVideo, MessageSquare } from "lucide-react"
+import { getApiUrl, API_CONFIG } from "@/lib/config"
 
 interface Summary {
   id: string
@@ -29,7 +30,7 @@ export default function HistoryPage() {
   useEffect(() => {
     const fetchSummaries = async () => {
       try {
-        const response = await fetch('/api/history')
+        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.HISTORY))
         if (!response.ok) {
           throw new Error('Failed to fetch summaries')
         }

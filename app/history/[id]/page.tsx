@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ArrowLeft, Youtube, Clock, Globe, FileVideo, MessageSquare } from "lucide-react"
 import { use } from "react"
 import ReactMarkdown from 'react-markdown'
+import { getApiUrl, API_CONFIG } from "@/lib/config"
 
 interface Summary {
   id: string
@@ -18,7 +19,10 @@ interface Summary {
   content: string
   transcript?: string
   language: string
+  mode: string
+  source: string
   createdAt: string
+  updatedAt?: string
 }
 
 interface PageProps {
@@ -38,12 +42,20 @@ export default function HistoryDetailPage({ params }: PageProps) {
         setLoading(true)
         setError(null)
 
-        const response = await fetch(`/api/history/${id}`)
+        // Since FastAPI backend doesn't have individual summary endpoint,
+        // we fetch all summaries and find the one we need
+        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.HISTORY))
         if (!response.ok) {
-          throw new Error("Failed to fetch summary")
+          throw new Error("Failed to fetch summaries")
         }
         const data = await response.json()
-        setSummary(data.summary)
+        const foundSummary = data.summaries.find((summary: Summary) => summary.id === id)
+        
+        if (!foundSummary) {
+          throw new Error("Summary not found")
+        }
+        
+        setSummary(foundSummary)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load summary")
       } finally {

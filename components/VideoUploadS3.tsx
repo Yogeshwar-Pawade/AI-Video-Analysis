@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Upload, FileVideo, X, AlertCircle, CheckCircle, Cloud } from "lucide-react"
+import { getApiUrl, API_CONFIG } from "@/lib/config"
 
 interface VideoUploadS3Props {
   onVideoUploaded: (s3Key: string, fileName: string) => void
@@ -97,7 +98,7 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
 
     try {
       // Get presigned URL from our API
-      const presignedResponse = await fetch('/api/upload/presigned', {
+      const presignedResponse = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_PRESIGNED), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
