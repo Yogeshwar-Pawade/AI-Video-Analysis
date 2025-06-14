@@ -1,1 +1,16 @@
 node_modules
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.DS_Store
+*.log
+.next/
+dist/
+build/
+.cache/
+.vscode/
+.idea/
+*.pyc
+__pycache__/
