@@ -20,6 +20,9 @@ except ImportError:
 
 import google.generativeai as genai
 import os
+import tempfile
+import subprocess
+from io import BytesIO
 
 from lib.supabase_client import supabase
 from lib.youtube_utils import extract_video_id, create_summary_prompt
@@ -241,7 +244,13 @@ async def summarize_video(request: SummarizeRequest):
                 'progress': 50
             }) + '\n'
 
-            # Generate summary using Gemini
+            yield json.dumps({
+                'type': 'progress',
+                'message': 'Generating summary with detailed visual information...',
+                'progress': 60
+            }) + '\n'
+
+            # Generate summary using Gemini with visual context
             model = get_gemini_client()
             chunks = await split_transcript_into_chunks(transcript)
             summary_content = ''
@@ -257,7 +266,7 @@ async def summarize_video(request: SummarizeRequest):
                     yield json.dumps({
                         'type': 'progress',
                         'message': f'Processing chunk {i+1} of {len(chunks)}...',
-                        'progress': 50 + (i * 30 // len(chunks))
+                        'progress': 60 + (i * 15 // len(chunks))
                     }) + '\n'
                     
                     prompt = create_summary_prompt(chunk, request.language)
@@ -274,7 +283,7 @@ async def summarize_video(request: SummarizeRequest):
             yield json.dumps({
                 'type': 'progress',
                 'message': 'Saving summary to database...',
-                'progress': 90
+                'progress': 85
             }) + '\n'
 
             # Save to database
@@ -336,4 +345,12 @@ async def summarize_video(request: SummarizeRequest):
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
         }
-    ) 
+    )
+
+
+
+
+
+ 
+
+ 

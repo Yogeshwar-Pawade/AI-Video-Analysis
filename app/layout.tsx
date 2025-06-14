@@ -6,8 +6,8 @@ import type React from "react"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "AI Video Summarizer",
-  description: "Transform videos into insights with AI-powered summaries",
+  title: "AI Video Analyzer",
+  description: "Transform videos into insights with AI-powered Analysis",
 }
 
 export default function RootLayout({

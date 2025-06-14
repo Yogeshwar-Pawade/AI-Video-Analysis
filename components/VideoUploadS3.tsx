@@ -20,6 +20,7 @@ interface UploadState {
   uploadProgress: number
   isValidating: boolean
   validationError: string | null
+  isProcessingComplete: boolean
   uploadComplete: boolean
   s3Key: string | null
 }
@@ -31,6 +32,7 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
     uploadProgress: 0,
     isValidating: false,
     validationError: null,
+    isProcessingComplete: false,
     uploadComplete: false,
     s3Key: null,
   })
@@ -117,31 +119,64 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
 
       const { uploadUrl, key } = await presignedResponse.json()
 
-      // Upload directly to S3 using PUT method
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+      // Upload with real-time progress using XMLHttpRequest
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100)
+            setUploadState(prev => ({ 
+              ...prev, 
+              uploadProgress: percentComplete 
+            }))
+            onProgress(percentComplete)
+          }
+        })
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // First show processing complete loading
+            setUploadState(prev => ({ 
+              ...prev, 
+              uploadProgress: 100,
+              isProcessingComplete: true,
+              s3Key: key
+            }))
+            onProgress(100)
+            
+            // After a brief delay, show upload complete
+            setTimeout(() => {
+              setUploadState(prev => ({ 
+                ...prev, 
+                isProcessingComplete: false,
+                uploadComplete: true
+              }))
+            }, 1500) // 1.5 second delay
+            
+            resolve(key)
+          } else {
+            reject(new Error(`Upload failed with status: ${xhr.status}`))
+          }
+        })
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          reject(new Error('Upload failed due to network error'))
+        })
+
+        // Handle abort
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload was aborted'))
+        })
+
+        // Start upload
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', file.type)
+        xhr.send(file)
       })
-
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text()
-        console.error('S3 upload error:', errorText)
-        throw new Error('Failed to upload to S3')
-      }
-
-      // Update progress to 100%
-      setUploadState(prev => ({ 
-        ...prev, 
-        uploadProgress: 100,
-        uploadComplete: true,
-        s3Key: key
-      }))
-      
-      onProgress(100)
-      return key
 
     } catch (error) {
       console.error('Upload failed:', error)
@@ -162,6 +197,7 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
       uploadProgress: 0,
       isValidating: false,
       validationError: null,
+      isProcessingComplete: false,
       uploadComplete: false,
       s3Key: null,
     })
@@ -199,6 +235,7 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
       uploadProgress: 0,
       isValidating: false,
       validationError: null,
+      isProcessingComplete: false,
       uploadComplete: false,
       s3Key: null,
     })
@@ -305,66 +342,92 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
         </Card>
       )}
 
-      {/* File Upload Progress */}
-      {uploadState.file && !uploadState.validationError && (
+      {/* Simple Upload Loading UI */}
+      {uploadState.isUploading && (
+        <Card className="border border-blue-200 bg-blue-50/50 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Uploading video...</p>
+                <p className="text-sm text-slate-600">Please wait a moment</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Processing Complete Loading */}
+      {uploadState.isProcessingComplete && (
+        <Card className="border border-blue-200 bg-blue-50/50 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Processing upload...</p>
+                <p className="text-sm text-slate-600">Finalizing your video</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* File Selected (Not Uploading) */}
+      {uploadState.file && !uploadState.validationError && !uploadState.isUploading && !uploadState.isProcessingComplete && !uploadState.uploadComplete && (
         <Card className="border-0 bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg">
           <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                    <FileVideo className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-slate-900 truncate max-w-[250px]">
-                      {uploadState.file.name}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      {formatFileSize(uploadState.file.size)}
-                    </p>
-                  </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                  <FileVideo className="w-6 h-6 text-white" />
                 </div>
-                
-                {!uploadState.isUploading && !uploadState.uploadComplete && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={removeFile}
-                    className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-700"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-
-                {uploadState.uploadComplete && (
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  </div>
-                )}
+                <div className="flex-1">
+                  <p className="font-medium text-slate-900 truncate max-w-[250px]">
+                    {uploadState.file.name}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    {formatFileSize(uploadState.file.size)}
+                  </p>
+                </div>
               </div>
               
-              {/* Upload Progress */}
-              {uploadState.isUploading && (
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium text-slate-700">Uploading to AWS S3</span>
-                    <span className="text-slate-600">{uploadState.uploadProgress}%</span>
-                  </div>
-                  <Progress value={uploadState.uploadProgress} className="h-3 bg-slate-200 rounded-full" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={removeFile}
+                className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload Complete */}
+      {uploadState.uploadComplete && (
+        <Card className="border border-green-200 bg-green-50/50 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
-              )}
-              
-              {/* Upload Complete */}
-              {uploadState.uploadComplete && (
-                <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-green-800">
-                      Successfully uploaded to S3 - Ready for AI processing
-                    </span>
-                  </div>
+                <div className="flex-1">
+                  <p className="font-medium text-green-900">Upload Complete!</p>
+                  <p className="text-sm text-green-700">
+                    {uploadState.file?.name} - Ready for AI processing
+                  </p>
                 </div>
-              )}
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-700">Ready</span>
+              </div>
             </div>
           </CardContent>
         </Card>

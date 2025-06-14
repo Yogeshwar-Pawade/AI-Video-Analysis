@@ -6,6 +6,7 @@ CREATE TABLE summaries (
   video_url TEXT NOT NULL,
   summary TEXT NOT NULL,
   transcript TEXT,
+  analysis JSONB, -- Store video analysis results as JSON
   language TEXT NOT NULL DEFAULT 'en',
   ai_model TEXT NOT NULL DEFAULT 'gemini-2.0-flash-001',
   video_duration INTEGER DEFAULT 0,
@@ -78,4 +79,10 @@ CREATE POLICY "Allow all operations on chat_conversations" ON chat_conversations
 FOR ALL USING (true);
 
 CREATE POLICY "Allow all operations on chat_messages" ON chat_messages
-FOR ALL USING (true); 
+FOR ALL USING (true);
+
+-- Add analysis column to summaries table
+ALTER TABLE summaries ADD COLUMN IF NOT EXISTS analysis JSONB;
+
+-- Create index for analysis column
+CREATE INDEX IF NOT EXISTS idx_summaries_analysis ON summaries USING GIN (analysis); 

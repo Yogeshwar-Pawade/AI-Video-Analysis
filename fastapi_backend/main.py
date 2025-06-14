@@ -22,6 +22,7 @@ from api.upload import router as upload_router
 from api.history import router as history_router
 from api.chat_router import router as chat_router
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,6 +57,7 @@ app.include_router(process_s3_video_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")
 app.include_router(history_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+
 
 @app.get("/")
 async def root():

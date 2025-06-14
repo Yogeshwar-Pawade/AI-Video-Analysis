@@ -179,8 +179,8 @@ export function ChatInterface({ summaryId, summaryTitle, onBack }: ChatInterface
       {/* VS Code Style Sidebar */}
       <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
         {/* Sidebar Header */}
-        <div className="p-3 border-b border-gray-200 bg-gray-100">
-          <div className="flex items-center justify-between mb-3">
+        <div className="p-2 border-b border-gray-200 bg-gray-100">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-gray-700 text-sm font-semibold">
               <Folder className="h-4 w-4" />
               CONVERSATIONS
@@ -289,7 +289,7 @@ export function ChatInterface({ summaryId, summaryTitle, onBack }: ChatInterface
         {activeConversation ? (
           <>
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+            <div className="flex-1 overflow-y-auto p-2 space-y-3 bg-white">
               {activeConversation.messages.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
@@ -302,29 +302,25 @@ export function ChatInterface({ summaryId, summaryTitle, onBack }: ChatInterface
                 </div>
               ) : (
                 activeConversation.messages.map((msg, index) => (
-                  <div key={index} className="space-y-2">
-                    {/* Message Header */}
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        msg.role === 'user' 
-                          ? 'bg-blue-600 text-white' 
-                          : 'bg-gray-200 text-blue-600'
-                      }`}>
-                        {msg.role === 'user' ? 'You' : 'AI Assistant'}
-                      </span>
-                      <span className="text-gray-500">
-                        {msg.created_at && formatTime(msg.created_at)}
-                      </span>
-                    </div>
-                    
-                    {/* Message Content */}
-                    <div className={`p-4 rounded-lg ${
-                      msg.role === 'user'
-                        ? 'bg-gray-50 border-l-4 border-blue-600'
-                        : 'bg-blue-50 border-l-4 border-blue-600'
-                    }`}>
+                  <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+                    <div className={`max-w-[60%] ${msg.role === 'user' ? 'order-2' : 'order-1'}`}>
+                      {/* Message Header */}
+                      <div className={`flex items-center gap-2 text-xs mb-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          msg.role === 'user' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-gray-200 text-blue-600'
+                        }`}>
+                          {msg.role === 'user' ? 'You' : 'AI Assistant'}
+                        </span>
+                        <span className="text-gray-500">
+                          {msg.created_at && formatTime(msg.created_at)}
+                        </span>
+                      </div>
+                      
+                      {/* Message Content */}
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-blue prose-sm max-w-none text-gray-700">
+                        <div className="bg-gray-50 border border-gray-200 text-gray-800 p-2 rounded-2xl shadow-md">
                           <ReactMarkdown 
                             components={{
                               code: ({inline, ...props}: any) => (
@@ -347,7 +343,9 @@ export function ChatInterface({ summaryId, summaryTitle, onBack }: ChatInterface
                           </ReactMarkdown>
                         </div>
                       ) : (
-                        <p className="text-gray-700 whitespace-pre-wrap">{msg.content}</p>
+                        <div className="bg-blue-100 border border-blue-200 text-blue-900 p-2 rounded-2xl shadow-md">
+                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -355,21 +353,23 @@ export function ChatInterface({ summaryId, summaryTitle, onBack }: ChatInterface
               )}
               
               {isSending && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="px-2 py-1 rounded text-xs font-medium bg-gray-200 text-blue-600">
-                      AI Assistant
-                    </span>
-                    <span className="text-gray-500">typing...</span>
-                  </div>
-                  <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="flex justify-start mb-4">
+                  <div className="max-w-[60%]">
+                    <div className="flex items-center gap-2 text-xs mb-2">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-gray-200 text-blue-600">
+                        AI Assistant
+                      </span>
+                      <span className="text-gray-500">typing...</span>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 text-gray-800 p-2 rounded-2xl shadow-md">
+                      <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                        <span className="text-gray-600 text-sm">Processing your request...</span>
                       </div>
-                      <span className="text-gray-600 text-sm">Processing your request...</span>
                     </div>
                   </div>
                 </div>
@@ -379,7 +379,7 @@ export function ChatInterface({ summaryId, summaryTitle, onBack }: ChatInterface
             </div>
 
             {/* VS Code Style Input Area */}
-            <div className="bg-gray-100 border-t border-gray-200 p-4">
+            <div className="bg-gray-100 border-t border-gray-200 p-2">
               <div className="flex items-end gap-3">
                 <div className="flex-1 relative">
                   <div className="absolute left-3 top-3 text-gray-500 text-sm">

@@ -35,6 +35,7 @@ export default function Home() {
     setIsProcessing(true)
     setProgress(0)
     setError(null)
+    setProgressMessage("Initializing analysis...")
 
     try {
       const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.PROCESS_S3_VIDEO), {
@@ -67,25 +68,26 @@ export default function Home() {
         const lines = chunk.split('\n')
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.trim()) {
             try {
-              const data = JSON.parse(line.slice(6))
+              const data = JSON.parse(line)
               
               if (data.type === 'progress') {
                 setProgress(data.progress)
                 setProgressMessage(data.message)
               } else if (data.type === 'complete') {
                 setProgress(100)
-                setProgressMessage(data.message)
-                // Navigate to summary page
+                setProgressMessage("Analysis complete! Redirecting...")
+                // Show completion notification
                 setTimeout(() => {
-                  router.push(`/summary/${data.summaryId}`)
-                }, 1000)
+                  router.push(`/history/${data.summaryId}`)
+                }, 1500)
               } else if (data.type === 'error') {
                 throw new Error(data.message)
               }
             } catch (parseError) {
-              console.error('Failed to parse SSE data:', parseError)
+              // Skip lines that aren't valid JSON
+              console.debug('Skipping non-JSON line:', line)
             }
           }
         }
@@ -108,7 +110,7 @@ export default function Home() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <FileVideo className="h-4 w-4 text-primary-foreground" />
               </div>
-              <h1 className="text-xl font-semibold text-foreground">AI Video Summarizer</h1>
+              <h1 className="text-xl font-semibold text-foreground">AI Video Analyzer</h1>
             </div>
             <Link 
               href="/history"
@@ -129,7 +131,7 @@ export default function Home() {
               Transform Your Videos into Insights
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Upload any video and get AI-powered summaries, transcripts, and interactive chat to explore the content deeper.
+              Upload any video and get AI-powered Analysis, transcripts, and interactive chat to explore the content deeper.
             </p>
           </div>
 
@@ -153,14 +155,47 @@ export default function Home() {
                
                {/* Processing Progress */}
                {isProcessing && (
-                 <Card className="border-primary/20 bg-primary/5">
-                   <CardContent className="p-4">
-                     <div className="space-y-3">
-                       <div className="flex justify-between text-sm font-medium">
-                         <span>{progressMessage || "Processing..."}</span>
-                         <span>{progress}%</span>
+                 <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-lg">
+                   <CardContent className="p-6">
+                     <div className="space-y-4">
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center space-x-3">
+                           <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                             <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+                           </div>
+                           <div>
+                             <p className="font-semibold text-slate-900">Processing Video</p>
+                             <p className="text-sm text-slate-600">{progressMessage || "Analyzing content..."}</p>
+                           </div>
+                         </div>
+                         <div className="text-right">
+                           <p className="text-2xl font-bold text-blue-600">{progress}%</p>
+                           <p className="text-xs text-slate-500">Complete</p>
+                         </div>
                        </div>
-                       <Progress value={progress} className="h-2" />
+                       
+                       <div className="space-y-2">
+                         <Progress 
+                           value={progress} 
+                           className="h-3 bg-slate-200 rounded-full"
+                         />
+                         <div className="flex justify-between text-xs text-slate-500">
+                           <span>Started</span>
+                           <span>In Progress</span>
+                           <span>Complete</span>
+                         </div>
+                       </div>
+
+                       {progress >= 100 && (
+                         <div className="bg-green-50 rounded-xl p-3 border border-green-200">
+                           <div className="flex items-center space-x-2">
+                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                             <span className="text-sm font-medium text-green-800">
+                               Analysis complete! Redirecting to results...
+                             </span>
+                           </div>
+                         </div>
+                       )}
                      </div>
                    </CardContent>
                  </Card>
@@ -185,7 +220,7 @@ export default function Home() {
                    size="lg"
                  >
                    <Sparkles className="h-4 w-4 mr-2" />
-                   Generate Summary
+                   Generate Analysis
                  </Button>
                )}
              </CardContent>
@@ -198,7 +233,7 @@ export default function Home() {
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                   <Zap className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>AI-Powered Summaries</CardTitle>
+                <CardTitle>AI-Powered Analysis</CardTitle>
                 <CardDescription>
                   Get concise, intelligent summaries of your video content using advanced AI technology.
                 </CardDescription>

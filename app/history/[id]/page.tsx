@@ -10,10 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, Clock, Globe, FileVideo, MessageSquare, Bot, MessageCircle } from "lucide-react"
+import { ArrowLeft, Clock, Globe, FileVideo, MessageSquare, Bot, MessageCircle, Trash2 } from "lucide-react"
 import { use } from "react"
 import ReactMarkdown from 'react-markdown'
-import { getApiUrl, API_CONFIG } from "@/lib/config"
+import { getApiUrl, API_CONFIG, apiRequest } from "@/lib/config"
 import { ChatInterface } from "@/components/ChatInterface"
 
 interface Summary {
@@ -27,6 +27,7 @@ interface Summary {
   source: string
   createdAt: string
   updatedAt?: string
+  video_url?: string
 }
 
 interface PageProps {
@@ -38,6 +39,7 @@ export default function HistoryDetailPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showChat, setShowChat] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
   const { id } = use(params)
 
@@ -84,6 +86,33 @@ export default function HistoryDetailPage({ params }: PageProps) {
   const getLanguageDisplay = (code: string) => {
     const entry = Object.entries(AVAILABLE_LANGUAGES).find(([_, langCode]) => langCode === code)
     return entry ? entry[0] : code
+  }
+
+  const handleDeleteSummary = async () => {
+    if (!summary) return
+    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${summary.title}"?\n\nThis will permanently delete the summary and all associated conversations. This action cannot be undone.`
+    )
+    
+    if (!confirmDelete) return
+
+    try {
+      setIsDeleting(true)
+      
+      await apiRequest(`${API_CONFIG.ENDPOINTS.DELETE_SUMMARY}/${summary.id}`, {
+        method: 'DELETE'
+      })
+      
+      // Redirect to history page after successful deletion
+      router.push('/history')
+      
+    } catch (err) {
+      console.error('Error deleting summary:', err)
+      alert('Failed to delete summary. Please try again.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (loading) {
@@ -206,6 +235,16 @@ export default function HistoryDetailPage({ params }: PageProps) {
               <h1 className="text-xl font-semibold text-foreground">Summary Details</h1>
             </div>
             <div className="flex items-center gap-3">
+              {/* Delete Button */}
+              <Button 
+                onClick={handleDeleteSummary}
+                disabled={isDeleting}
+                variant="outline"
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+              >
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </Button>
               {/* Chat Redirect Button */}
               <Button 
                 onClick={() => setShowChat(true)}
@@ -266,7 +305,7 @@ export default function HistoryDetailPage({ params }: PageProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-primary" />
-                AI Summary
+                AI Analysis
               </CardTitle>
             </CardHeader>
             <CardContent>

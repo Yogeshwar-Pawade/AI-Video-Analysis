@@ -199,7 +199,7 @@ export default function HistoryPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">No videos processed yet</h3>
                 <p className="text-muted-foreground mb-6">
-                  Upload your first video to get started with AI-powered summaries
+                  Upload your first video to get started with AI-powered Analysis
                 </p>
                 <Link href="/">
                   <Button>Upload Video</Button>

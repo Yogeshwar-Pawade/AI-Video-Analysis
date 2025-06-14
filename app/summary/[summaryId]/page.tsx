@@ -1,13 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileVideo, MessageSquare, ArrowLeft, Sparkles, Clock, Globe } from "lucide-react"
+import { FileVideo, MessageSquare, ArrowLeft, Sparkles, Clock, Globe, Trash2 } from "lucide-react"
 import { use } from "react"
 import ReactMarkdown from 'react-markdown'
 import { supabase } from "@/lib/supabase"
+import { getApiUrl, API_CONFIG, apiRequest } from "@/lib/config"
 import Link from "next/link"
 
 interface Summary {
@@ -30,6 +32,8 @@ export default function SummaryPage({ params }: PageProps) {
   const [summaryData, setSummaryData] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
 
   const { summaryId } = use(params)
 
@@ -83,6 +87,36 @@ export default function SummaryPage({ params }: PageProps) {
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
+  const handleDeleteSummary = async () => {
+    if (!summaryData) return
+    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${summaryData.title}"?\n\nThis will permanently delete the summary and all associated conversations. This action cannot be undone.`
+    )
+    
+    if (!confirmDelete) return
+
+    try {
+      setIsDeleting(true)
+      
+      // Extract the actual ID from the summaryId (remove 'video_' prefix if present)
+      const actualId = summaryId.startsWith('video_') ? summaryId.replace('video_', '') : summaryId
+      
+      await apiRequest(`${API_CONFIG.ENDPOINTS.DELETE_SUMMARY}/${actualId}`, {
+        method: 'DELETE'
+      })
+      
+      // Redirect to home page after successful deletion
+      router.push('/')
+      
+    } catch (err) {
+      console.error('Error deleting summary:', err)
+      alert('Failed to delete summary. Please try again.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (loading) {
@@ -237,15 +271,26 @@ export default function SummaryPage({ params }: PageProps) {
               </div>
               <h1 className="text-xl font-semibold text-slate-900">Video Summary</h1>
             </div>
-            <Link href="/">
+            <div className="flex items-center gap-3">
               <Button 
-                variant="ghost" 
-                className="flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 rounded-xl px-4 py-2 transition-all duration-200"
+                onClick={handleDeleteSummary}
+                disabled={isDeleting}
+                variant="outline"
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 rounded-xl px-4 py-2 transition-all duration-200"
               >
-                <ArrowLeft className="h-4 w-4" />
-                Back
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </Button>
-            </Link>
+              <Link href="/">
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 rounded-xl px-4 py-2 transition-all duration-200"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
