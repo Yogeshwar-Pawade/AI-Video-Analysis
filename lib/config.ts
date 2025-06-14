@@ -10,6 +10,9 @@ export const API_CONFIG = {
     PROCESS_S3_VIDEO: '/api/process-s3-video',
     UPLOAD_PRESIGNED: '/api/upload/presigned',
     HISTORY: '/api/history',
+    CHAT_CONVERSATIONS: '/api/chat/conversations',
+    CHAT_CONVERSATION: '/api/chat/conversation',
+    CHAT_MESSAGE: '/api/chat/message',
   }
 }
 

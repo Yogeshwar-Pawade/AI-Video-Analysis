@@ -214,35 +214,57 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Upload Area */}
       {!uploadState.file && (
-        <Card className="border-2 border-dashed transition-colors">
-          <CardContent className="p-8">
+        <Card className={`border-2 border-dashed rounded-2xl transition-all duration-300 ${
+          isDragActive 
+            ? 'border-blue-400 bg-blue-50/50 shadow-lg scale-[1.02]' 
+            : 'border-slate-300 hover:border-slate-400 hover:shadow-md'
+        }`}>
+          <CardContent className="p-12">
             <div
               {...getRootProps()}
-              className={`cursor-pointer text-center space-y-4 ${
-                isDragActive ? 'text-primary' : 'text-muted-foreground'
+              className={`cursor-pointer text-center space-y-6 transition-colors ${
+                isDragActive ? 'text-blue-600' : 'text-slate-600'
               }`}
             >
               <input {...getInputProps()} />
-              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                <Cloud className="w-6 h-6" />
+              <div className={`mx-auto w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                isDragActive 
+                  ? 'bg-blue-100 text-blue-600 scale-110' 
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}>
+                <Cloud className="w-10 h-10" />
               </div>
               
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium text-foreground">
-                  {isDragActive ? 'Drop your video here' : 'Upload to AWS S3'}
+              <div className="space-y-3">
+                <h3 className="text-xl font-semibold text-slate-900">
+                  {isDragActive ? 'Drop your video here' : 'Upload Video File'}
                 </h3>
-                <p className="text-sm">
+                <p className="text-slate-600 text-lg">
                   Drag and drop your video file here, or{' '}
-                  <span className="text-primary font-medium">browse from device</span>
+                  <span className="text-blue-600 font-medium hover:text-blue-700 transition-colors">browse from device</span>
                 </p>
-                <p className="text-xs">
-                  Reliable multipart upload • Supports MP4, AVI, MOV, MKV, WebM, WMV, FLV 
-                  <br />
-                  Max {maxDuration} minutes, 500MB
-                </p>
+                <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-600">
+                  <div className="flex items-center justify-center gap-6 flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      Secure S3 Upload
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      Max {maxDuration} minutes
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      Up to 500MB
+                    </span>
+                  </div>
+                  <p className="text-center mt-3 text-xs text-slate-500">
+                    Supports MP4, AVI, MOV, MKV, WebM, WMV, FLV
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -251,11 +273,16 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
 
       {/* Validation Loading */}
       {uploadState.isValidating && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              <span className="text-sm">Validating video file...</span>
+        <Card className="border border-blue-200 bg-blue-50/50 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Validating video file</p>
+                <p className="text-sm text-slate-600">Checking format, size, and duration...</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -263,11 +290,16 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
 
       {/* Validation Error */}
       {uploadState.validationError && (
-        <Card className="border-destructive">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3 text-destructive">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm">{uploadState.validationError}</span>
+        <Card className="border border-red-200 bg-red-50 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-start space-x-4">
+              <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-4 h-4 text-red-600" />
+              </div>
+              <div>
+                <p className="font-medium text-red-900">Upload Error</p>
+                <p className="text-sm text-red-700 mt-1">{uploadState.validationError}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -275,17 +307,19 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
 
       {/* File Upload Progress */}
       {uploadState.file && !uploadState.validationError && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-3">
+        <Card className="border-0 bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg">
+          <CardContent className="p-6">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FileVideo className="w-8 h-8 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium truncate max-w-[200px]">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                    <FileVideo className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-slate-900 truncate max-w-[250px]">
                       {uploadState.file.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-slate-600">
                       {formatFileSize(uploadState.file.size)}
                     </p>
                   </div>
@@ -296,33 +330,39 @@ export function VideoUploadS3({ onVideoUploaded, onProgress, maxDuration = 30 }:
                     variant="ghost"
                     size="sm"
                     onClick={removeFile}
-                    className="h-8 w-8 p-0"
+                    className="h-10 w-10 p-0 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-700"
                   >
                     <X className="w-4 h-4" />
                   </Button>
                 )}
 
                 {uploadState.uploadComplete && (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
                 )}
               </div>
               
               {/* Upload Progress */}
               {uploadState.isUploading && (
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Uploading to AWS S3...</span>
-                    <span>{uploadState.uploadProgress}%</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-slate-700">Uploading to AWS S3</span>
+                    <span className="text-slate-600">{uploadState.uploadProgress}%</span>
                   </div>
-                  <Progress value={uploadState.uploadProgress} className="h-2" />
+                  <Progress value={uploadState.uploadProgress} className="h-3 bg-slate-200 rounded-full" />
                 </div>
               )}
               
               {/* Upload Complete */}
               {uploadState.uploadComplete && (
-                <div className="flex items-center space-x-2 text-sm text-green-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>Uploaded to S3 successfully - Ready for processing</span>
+                <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-green-800">
+                      Successfully uploaded to S3 - Ready for AI processing
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
